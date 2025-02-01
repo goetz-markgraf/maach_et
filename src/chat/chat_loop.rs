@@ -10,10 +10,7 @@ pub struct ChatLoop {
 
 impl ChatLoop {
     pub fn new(llm_api: Box<dyn LLMClient>, system_prompt: String) -> Self {
-        let conversation_history = vec![Message {
-            role: Role::System,
-            content: system_prompt.clone(),
-        }];
+        let conversation_history = vec![];
 
         Self {
             llm_api,
@@ -69,8 +66,11 @@ impl ChatLoop {
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+    use tokio::sync::Mutex;
+
     use super::*;
-    use std::sync::Arc;
+    use std::{error::Error, sync::Arc};
 
     struct MockLLMAPI {
         responses: Arc<Mutex<Vec<String>>>,
@@ -92,7 +92,7 @@ mod tests {
             _history: Vec<Message>,
             _user_message: String,
         ) -> Result<Message, Box<dyn Error>> {
-            let mut responses = self.responses.lock().unwrap();
+            let mut responses = self.responses.lock().await;
             if responses.is_empty() {
                 return Err("No more mock responses".into());
             }
@@ -106,18 +106,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_chat_loop_exit_commands() {
+    async fn test_chat_loop_initialization() {
         let mock_api = Box::new(MockLLMAPI::new(vec![]));
         let system_prompt = "Test system prompt".to_string();
         let chat_loop = ChatLoop::new(mock_api, system_prompt);
 
         // Test that the initial conversation history contains the system prompt
-        assert_eq!(chat_loop.conversation_history.len(), 1);
-        assert_eq!(chat_loop.conversation_history[0].role, Role::System);
-        assert_eq!(
-            chat_loop.conversation_history[0].content,
-            "Test system prompt"
-        );
+        assert_eq!(chat_loop.conversation_history.len(), 0);
     }
 
     #[tokio::test]
@@ -154,10 +149,9 @@ mod tests {
         chat_loop.conversation_history.push(response);
 
         // Verify conversation history
-        assert_eq!(chat_loop.conversation_history.len(), 3);
-        assert_eq!(chat_loop.conversation_history[0].role, Role::System);
-        assert_eq!(chat_loop.conversation_history[1].role, Role::User);
-        assert_eq!(chat_loop.conversation_history[2].role, Role::Agent);
+        assert_eq!(chat_loop.conversation_history.len(), 2);
+        assert_eq!(chat_loop.conversation_history[0].role, Role::User);
+        assert_eq!(chat_loop.conversation_history[1].role, Role::Agent);
     }
 
     #[tokio::test]
