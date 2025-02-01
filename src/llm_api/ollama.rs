@@ -46,7 +46,6 @@ struct ChatRequest {
 
 #[derive(Debug, Deserialize)]
 struct ChatResponse {
-    model: String,
     message: OllamaMessage,
 }
 
