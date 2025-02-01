@@ -1,2 +1,2 @@
-mod llm_api;
-mod chat;
+pub mod chat;
+pub mod llm_api;

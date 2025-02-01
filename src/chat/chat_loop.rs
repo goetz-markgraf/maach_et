@@ -19,6 +19,10 @@ impl ChatLoop {
         }
     }
 
+    pub fn get_conversation_history(&self) -> Vec<Message> {
+        self.conversation_history.clone()
+    }
+
     pub async fn run(&mut self) -> io::Result<()> {
         loop {
             print!("/USER/ ");
@@ -34,11 +38,7 @@ impl ChatLoop {
                 break;
             }
 
-            // Add user message to history
-            self.conversation_history.push(Message {
-                role: Role::User,
-                content: user_input.to_string(),
-            });
+            println!("Thinking...");
 
             // Get response from LLM
             match self
@@ -52,6 +52,10 @@ impl ChatLoop {
             {
                 Ok(response) => {
                     println!("/ASSISTANT/ {}", response.content);
+                    self.conversation_history.push(Message {
+                        role: Role::User,
+                        content: user_input.to_string(),
+                    });
                     self.conversation_history.push(response);
                 }
                 Err(e) => {
