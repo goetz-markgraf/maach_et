@@ -1,5 +1,4 @@
-use crate::llm_api::LLMClient;
-use crate::llm_api::Message;
+use crate::llm_api::{LLMClient, Message, Role};
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -14,17 +13,41 @@ pub struct OllamaClient {
     client: Client,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct OllamaMessage {
+    role: String,
+    content: String,
+}
+
+impl From<OllamaMessage> for Message {
+    fn from(msg: OllamaMessage) -> Self {
+        Message {
+            role: Role::from(msg.role.as_str()),
+            content: msg.content,
+        }
+    }
+}
+
+impl From<&Message> for OllamaMessage {
+    fn from(msg: &Message) -> Self {
+        OllamaMessage {
+            role: msg.role.as_str().to_string(),
+            content: msg.content.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 struct ChatRequest {
     model: String,
-    messages: Vec<Message>,
+    messages: Vec<OllamaMessage>,
     stream: bool,
 }
 
 #[derive(Debug, Deserialize)]
 struct ChatResponse {
     model: String,
-    message: Message,
+    message: OllamaMessage,
 }
 
 impl OllamaClient {
@@ -53,15 +76,16 @@ impl OllamaClient {
         let mut messages = Vec::new();
 
         if let Some(system) = system_prompt {
-            messages.push(Message {
-                role: "system".to_string(),
+            messages.push(OllamaMessage {
+                role: Role::System.as_str().to_string(),
                 content: system,
             });
         }
 
-        messages.extend(history);
-        messages.push(Message {
-            role: "user".to_string(),
+        messages.extend(history.iter().map(OllamaMessage::from));
+
+        messages.push(OllamaMessage {
+            role: Role::User.as_str().to_string(),
             content: user_message,
         });
 
@@ -80,7 +104,7 @@ impl OllamaClient {
             .json::<ChatResponse>()
             .await?;
 
-        Ok(response.message)
+        Ok(response.message.into())
     }
 }
 
@@ -144,7 +168,7 @@ mod tests {
                 None,
                 vec![
                     Message {
-                        role: "user".to_string(),
+                        role: Role::User,
                         content: "What is Rust?".to_string(),
                     },
                     response1.clone(),

@@ -2,8 +2,41 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Role {
+    System,
+    User,
+    Agent,
+}
+
+impl Role {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Role::System => "system",
+            Role::User => "user",
+            Role::Agent => "assistant",
+        }
+    }
+}
+
+impl From<&Role> for String {
+    fn from(role: &Role) -> Self {
+        role.as_str().to_string()
+    }
+}
+
+impl From<&str> for Role {
+    fn from(s: &str) -> Self {
+        match s {
+            "system" => Role::System,
+            "user" => Role::User,
+            _ => Role::Agent,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
-    pub role: String,
+    pub role: Role,
     pub content: String,
 }
 
@@ -65,7 +98,7 @@ mod tests {
             user_message: String,
         ) -> Result<Message, Box<dyn Error>> {
             Ok(Message {
-                role: "assistant".to_string(),
+                role: Role::Agent,
                 content: format!(
                     "Mock response to: {}. System prompt: {:?}, History length: {}",
                     user_message,
@@ -118,11 +151,11 @@ mod tests {
 
         let history = vec![
             Message {
-                role: "user".to_string(),
+                role: Role::User,
                 content: "Previous message".to_string(),
             },
             Message {
-                role: "assistant".to_string(),
+                role: Role::Agent,
                 content: "Previous response".to_string(),
             },
         ];
@@ -155,7 +188,7 @@ mod tests {
         // Second message with history
         let history = vec![
             Message {
-                role: "user".to_string(),
+                role: Role::User,
                 content: "First message".to_string(),
             },
             response1,

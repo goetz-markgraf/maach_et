@@ -1,5 +1,4 @@
-use crate::llm_api::LLMClient;
-use crate::llm_api::Message;
+use crate::llm_api::{LLMClient, Message, Role};
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -14,20 +13,44 @@ pub struct ChatGPTClient {
     client: Client,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ChatGPTMessage {
+    role: String,
+    content: String,
+}
+
+impl From<ChatGPTMessage> for Message {
+    fn from(msg: ChatGPTMessage) -> Self {
+        Message {
+            role: Role::from(msg.role.as_str()),
+            content: msg.content,
+        }
+    }
+}
+
+impl From<&Message> for ChatGPTMessage {
+    fn from(msg: &Message) -> Self {
+        ChatGPTMessage {
+            role: msg.role.as_str().to_string(),
+            content: msg.content.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 struct ChatRequest {
     model: String,
-    messages: Vec<Message>,
+    messages: Vec<ChatGPTMessage>,
 }
 
 #[derive(Debug, Deserialize)]
-struct ChatResponse {
+struct ChatGPTResponse {
     choices: Vec<Choice>,
 }
 
 #[derive(Debug, Deserialize)]
 struct Choice {
-    message: Message,
+    message: ChatGPTMessage,
 }
 
 impl ChatGPTClient {
@@ -56,15 +79,16 @@ impl ChatGPTClient {
         let mut messages = Vec::new();
 
         if let Some(system) = system_prompt {
-            messages.push(Message {
-                role: "system".to_string(),
+            messages.push(ChatGPTMessage {
+                role: Role::System.as_str().to_string(),
                 content: system,
             });
         }
 
-        messages.extend(history);
-        messages.push(Message {
-            role: "user".to_string(),
+        messages.extend(history.iter().map(ChatGPTMessage::from));
+
+        messages.push(ChatGPTMessage {
+            role: Role::User.as_str().to_string(),
             content: user_message,
         });
 
@@ -80,13 +104,13 @@ impl ChatGPTClient {
             .json(&request)
             .send()
             .await?
-            .json::<ChatResponse>()
+            .json::<ChatGPTResponse>()
             .await?;
 
         response
             .choices
             .first()
-            .map(|choice| choice.message.clone())
+            .map(|choice| choice.message.clone().into())
             .ok_or_else(|| "No response from ChatGPT".into())
     }
 }
@@ -151,7 +175,7 @@ mod tests {
                 None,
                 vec![
                     Message {
-                        role: "user".to_string(),
+                        role: Role::User,
                         content: "What is Rust?".to_string(),
                     },
                     response1.clone(),

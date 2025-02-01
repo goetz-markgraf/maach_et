@@ -1,4 +1,4 @@
-use crate::llm_api::{Message, LLMAPI};
+use crate::llm_api::{Message, Role, LLMAPI};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -70,7 +70,7 @@ impl Agent for BasicAgent {
     ) -> Result<AgentResponse, Box<dyn Error>> {
         // Add the task to the conversation history
         context.add_message(Message {
-            role: "user".to_string(),
+            role: Role::User,
             content: task.to_string(),
         });
 
@@ -119,7 +119,7 @@ mod tests {
             _user_message: String,
         ) -> Result<Message, Box<dyn Error>> {
             Ok(Message {
-                role: "assistant".to_string(),
+                role: Role::Agent,
                 content: format!("This is a {} response", self.response_type),
             })
         }
@@ -184,7 +184,7 @@ mod tests {
         assert_eq!(context.conversation_history.len(), 0);
 
         context.add_message(Message {
-            role: "user".to_string(),
+            role: Role::User,
             content: "Test message".to_string(),
         });
         assert_eq!(context.conversation_history.len(), 1);
