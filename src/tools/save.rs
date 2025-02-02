@@ -17,6 +17,8 @@ impl Tool for SaveTool {
 
 ### Purpose:
 Create or overwrite a file with the given content.
+Whenever you want to create a overwrite a file, always use this tool. Do not just
+print the code to the user.
 
 ### Usage Pattern:
 
@@ -47,6 +49,17 @@ no output
     }
 
     fn execute(&self, parameter: Option<&str>, content: &str) -> Option<String> {
-        todo!("not yet implemented");
+        if let Some(parameter) = parameter {
+            println!(
+                "*** Save Tool: I am saving the file {} with content: {}",
+                parameter, content
+            );
+        } else {
+            println!(
+                "*** Save Tool: Error, no parameter given but a content: {}",
+                content
+            );
+        }
+        None
     }
 }

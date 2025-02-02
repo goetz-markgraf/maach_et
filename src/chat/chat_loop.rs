@@ -46,12 +46,15 @@ impl ChatLoop {
                 io::stdin().read_line(&mut user_input)?;
 
                 // Check for exit commands
-                if matches!(user_input.as_ref(), "/bye" | "/exit" | "/quit") {
+                if user_input.trim() == "/bye"
+                    || user_input.trim() == "/exit"
+                    || user_input.trim() == "/quit"
+                {
                     println!("Goodbye!");
                     loop_status = LoopStatus::Exit;
                     continue;
                 }
-                user_input.trim().to_string()
+                format!("Help me with my task. {}\nKeep in mind to use the tools described in the system prompt", user_input.trim())
             } else {
                 tool_input.clone()
             };
