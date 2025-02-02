@@ -1,7 +1,17 @@
 use std::io::{self, Write};
 
-use crate::llm_api::{LLMClient, Message, Role};
+use crate::{
+    chat::tool_checker::run_tools,
+    llm_api::{LLMClient, Message, Role},
+};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum LoopStatus {
+    UserInput,
+    ToolInput,
+    Exit,
+    Error,
+}
 pub struct ChatLoop {
     llm_api: Box<dyn LLMClient>,
     system_prompt: String,
@@ -24,19 +34,27 @@ impl ChatLoop {
     }
 
     pub async fn run(&mut self) -> io::Result<()> {
-        loop {
-            print!("/USER/ ");
-            io::stdout().flush()?;
+        let mut loop_status = LoopStatus::UserInput;
+        let mut tool_input = String::new();
 
-            let mut user_input = String::new();
-            io::stdin().read_line(&mut user_input)?;
-            let user_input = user_input.trim();
+        while loop_status != LoopStatus::Exit && loop_status != LoopStatus::Error {
+            let input = if loop_status == LoopStatus::UserInput {
+                print!("/USER/ ");
+                io::stdout().flush()?;
 
-            // Check for exit commands
-            if matches!(user_input, "/bye" | "/exit" | "/quit") {
-                println!("Goodbye!");
-                break;
-            }
+                let mut user_input = String::new();
+                io::stdin().read_line(&mut user_input)?;
+
+                // Check for exit commands
+                if matches!(user_input.as_ref(), "/bye" | "/exit" | "/quit") {
+                    println!("Goodbye!");
+                    loop_status = LoopStatus::Exit;
+                    continue;
+                }
+                user_input.trim().to_string()
+            } else {
+                tool_input.clone()
+            };
 
             println!("Thinking...");
 
@@ -46,20 +64,30 @@ impl ChatLoop {
                 .chat(
                     Some(self.system_prompt.clone()),
                     self.conversation_history.clone(),
-                    user_input.to_string(),
+                    input.to_string(),
                 )
                 .await
             {
                 Ok(response) => {
                     println!("/ASSISTANT/ {}", response.content);
+                    let response_str = response.content.clone();
                     self.conversation_history.push(Message {
                         role: Role::User,
-                        content: user_input.to_string(),
+                        content: input.to_string(),
                     });
                     self.conversation_history.push(response);
+
+                    match run_tools(&response_str) {
+                        None => loop_status = LoopStatus::UserInput,
+                        Some(tool_output) => {
+                            tool_input = tool_output;
+                            loop_status = LoopStatus::ToolInput;
+                        }
+                    }
                 }
                 Err(e) => {
                     eprintln!("Error getting response: {}", e);
+                    loop_status = LoopStatus::Error;
                 }
             }
         }
