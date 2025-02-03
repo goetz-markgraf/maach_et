@@ -3,7 +3,7 @@ use mach_et::llm_api::OllamaClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let llm_client = OllamaClient::new("localhost".to_string(), 11434, "deepseek-r1".to_string());
+    let llm_client = OllamaClient::new("localhost".to_string(), 11434, "qwen2.5-coder".to_string());
 
     let mut system_prompt = get_system_prompt();
     system_prompt.push_str(&mach_et::tools::get_tool_prompt());
