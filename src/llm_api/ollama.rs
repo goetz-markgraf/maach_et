@@ -94,9 +94,6 @@ impl OllamaClient {
             stream: false,
         };
 
-        println!("*** Request:\n{:?}", request);
-        println!("*** Request Ende ***");
-
         let response = self
             .client
             .post(&url)
