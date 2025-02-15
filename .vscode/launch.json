@@ -7,16 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'mach_et'",
+            "name": "Debug unit tests in library 'maach_et'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=mach_et"
+                    "--package=maach_et"
                 ],
                 "filter": {
-                    "name": "mach_et",
+                    "name": "maach_et",
                     "kind": "lib"
                 }
             },
@@ -26,15 +26,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'mach_et'",
+            "name": "Debug executable 'maach_et'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=mach_et",
-                    "--package=mach_et"
+                    "--bin=maach_et",
+                    "--package=maach_et"
                 ],
                 "filter": {
-                    "name": "mach_et",
+                    "name": "maach_et",
                     "kind": "bin"
                 }
             },
@@ -44,16 +44,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'mach_et'",
+            "name": "Debug unit tests in executable 'maach_et'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=mach_et",
-                    "--package=mach_et"
+                    "--bin=maach_et",
+                    "--package=maach_et"
                 ],
                 "filter": {
-                    "name": "mach_et",
+                    "name": "maach_et",
                     "kind": "bin"
                 }
             },

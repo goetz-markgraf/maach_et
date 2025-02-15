@@ -1,6 +1,6 @@
 use clap::Parser;
-use mach_et::chat::{get_system_prompt, ChatLoop};
-use mach_et::config::Config;
+use maach_et::chat::{get_system_prompt, ChatLoop};
+use maach_et::config::Config;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Using Model: {}", model_parts[1]);
 
     let mut system_prompt = get_system_prompt();
-    system_prompt.push_str(&mach_et::tools::get_tool_prompt());
+    system_prompt.push_str(&maach_et::tools::get_tool_prompt());
 
     let mut chat_loop = ChatLoop::new(llm_client, system_prompt);
 
