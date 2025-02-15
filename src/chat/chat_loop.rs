@@ -41,23 +41,36 @@ impl ChatLoop {
                 for file in &files {
                     println!("  - {}", file);
                 }
-                print!("\nWould you like to commit these changes? (y/n): ");
+                print!("\nWould you like to commit these changes? (y: commit, n: proceed without committing, x: exit) ");
                 io::stdout().flush()?;
 
                 let mut response = String::new();
                 io::stdin().read_line(&mut response)?;
 
-                if response.trim().to_lowercase() == "y" {
-                    print!("Enter commit message: ");
-                    io::stdout().flush()?;
+                match response.trim().to_lowercase().as_str() {
+                    "y" => {
+                        print!("Enter commit message: ");
+                        io::stdout().flush()?;
 
-                    let mut commit_msg = String::new();
-                    io::stdin().read_line(&mut commit_msg)?;
+                        let mut commit_msg = String::new();
+                        io::stdin().read_line(&mut commit_msg)?;
 
-                    if let Err(e) = git::commit_all_changes(commit_msg.trim()) {
-                        eprintln!("Failed to commit changes: {}", e);
-                    } else {
-                        println!("Changes committed successfully!");
+                        if let Err(e) = git::commit_all_changes(commit_msg.trim()) {
+                            eprintln!("Failed to commit changes: {}", e);
+                        } else {
+                            println!("Changes committed successfully!");
+                        }
+                    }
+                    "x" => {
+                        println!("Exiting due to uncommitted changes.");
+                        return Ok(());
+                    }
+                    "n" => {
+                        println!("Proceeding without committing changes.");
+                    }
+                    _ => {
+                        println!("Invalid option. Exiting.");
+                        return Ok(());
                     }
                 }
             }
