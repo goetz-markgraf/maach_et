@@ -45,7 +45,7 @@ You will then be given this output as you next user prompt.
     // Add descriptions from all available tools
     for tool in get_all_tools() {
         prompt.push_str(&tool.get_description());
-        prompt.push_str("\n");
+        prompt.push('\n');
     }
 
     prompt
