@@ -1,14 +1,21 @@
+use clap::Parser;
 use mach_et::chat::{get_system_prompt, ChatLoop};
-use mach_et::llm_api::OllamaClient;
+use mach_et::config::Config;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let llm_client = OllamaClient::new("localhost".to_string(), 11434, "qwen2.5-coder".to_string());
+    let config = Config::parse();
+    let llm_client = config.create_llm_client()?;
+
+    // Print model information
+    let model_parts: Vec<&str> = config.model.split('/').collect();
+    println!("Using LLM Provider: {}", model_parts[0]);
+    println!("Using Model: {}", model_parts[1]);
 
     let mut system_prompt = get_system_prompt();
     system_prompt.push_str(&mach_et::tools::get_tool_prompt());
 
-    let mut chat_loop = ChatLoop::new(Box::new(llm_client), system_prompt);
+    let mut chat_loop = ChatLoop::new(llm_client, system_prompt);
 
     chat_loop.run().await?;
 
