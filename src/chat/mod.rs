@@ -1,4 +1,5 @@
 mod chat_loop;
+mod git;
 mod prompt;
 mod tool_checker;
 

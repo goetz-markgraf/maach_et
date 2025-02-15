@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
 use crate::{
-    chat::tool_checker::run_tools,
+    chat::{git, tool_checker::run_tools},
     llm_api::{LLMClient, Message, Role},
 };
 
@@ -34,6 +34,35 @@ impl ChatLoop {
     }
 
     pub async fn run(&mut self) -> io::Result<()> {
+        // Check for uncommitted git changes
+        if let Some((has_changes, files)) = git::has_uncommitted_changes() {
+            if has_changes {
+                println!("The following files have uncommitted changes:");
+                for file in &files {
+                    println!("  - {}", file);
+                }
+                print!("\nWould you like to commit these changes? (y/n): ");
+                io::stdout().flush()?;
+
+                let mut response = String::new();
+                io::stdin().read_line(&mut response)?;
+
+                if response.trim().to_lowercase() == "y" {
+                    print!("Enter commit message: ");
+                    io::stdout().flush()?;
+
+                    let mut commit_msg = String::new();
+                    io::stdin().read_line(&mut commit_msg)?;
+
+                    if let Err(e) = git::commit_all_changes(commit_msg.trim()) {
+                        eprintln!("Failed to commit changes: {}", e);
+                    } else {
+                        println!("Changes committed successfully!");
+                    }
+                }
+            }
+        }
+
         let mut loop_status = LoopStatus::UserInput;
         let mut tool_input = String::new();
 
