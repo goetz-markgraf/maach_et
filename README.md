@@ -1,4 +1,6 @@
-# mach_et
+# maach_et
+(German Cologne Dialect for: "do it!")
+
 A LLM agent tool for the CLI written in Rust
 
 Currently WIP
