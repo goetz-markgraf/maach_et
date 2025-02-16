@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::io::{self, Write};
 
 use crate::{
@@ -33,7 +34,7 @@ impl ChatLoop {
         self.conversation_history.clone()
     }
 
-    pub async fn run(&mut self) -> io::Result<()> {
+    pub async fn run(&mut self) -> Result<(), Box<dyn Error>> {
         // Check for uncommitted git changes
         if let Some((has_changes, files)) = git::has_uncommitted_changes() {
             if has_changes {
@@ -122,7 +123,7 @@ impl ChatLoop {
                     });
                     self.conversation_history.push(response);
 
-                    match run_tools(&response_str) {
+                    match run_tools(&response_str)? {
                         None => loop_status = LoopStatus::UserInput,
                         Some(tool_output) => {
                             tool_input = tool_output;

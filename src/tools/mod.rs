@@ -5,7 +5,11 @@ mod save;
 pub trait Tool: 'static {
     fn get_description(&self) -> String;
     fn get_indicator(&self) -> String;
-    fn execute(&self, parameter: Option<&str>, content: &str) -> Option<String>;
+    fn execute(
+        &self,
+        parameter: Option<&str>,
+        content: &str,
+    ) -> Result<Option<String>, Box<dyn Error>>;
 }
 
 pub fn get_all_tools() -> Vec<Box<dyn Tool>> {

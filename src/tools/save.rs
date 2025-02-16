@@ -48,18 +48,13 @@ no output
         "save".to_string()
     }
 
-    fn execute(&self, parameter: Option<&str>, content: &str) -> Option<String> {
-        if let Some(parameter) = parameter {
-            println!(
-                "*** Save Tool: I am saving the file {} with content: {}",
-                parameter, content
-            );
-        } else {
-            println!(
-                "*** Save Tool: Error, no parameter given but a content: {}",
-                content
-            );
-        }
-        None
+    fn execute(
+        &self,
+        parameter: Option<&str>,
+        content: &str,
+    ) -> Result<Option<String>, Box<dyn Error>> {
+        let path = parameter.ok_or_else(|| "No file path provided".to_string())?;
+        std::fs::write(path, content)?;
+        Ok(None)
     }
 }

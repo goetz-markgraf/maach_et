@@ -1,5 +1,6 @@
 use crate::tools::{get_all_tools, Tool};
 use std::cell::RefCell;
+use std::error::Error;
 use std::rc::Rc;
 
 #[derive(Debug, PartialEq)]
@@ -9,26 +10,29 @@ pub struct ToolInput {
     pub content: String,
 }
 
-pub fn run_tools(llm_output: &str) -> Option<String> {
+pub fn run_tools(llm_output: &str) -> Result<Option<String>, Box<dyn Error>> {
     let tool_candidates = check_for_tools(llm_output);
     let all_tools = get_all_tools();
 
     execute_tools(tool_candidates, all_tools)
 }
 
-fn execute_tools(tool_candidates: Vec<ToolInput>, all_tools: Vec<Box<dyn Tool>>) -> Option<String> {
+fn execute_tools(
+    tool_candidates: Vec<ToolInput>,
+    all_tools: Vec<Box<dyn Tool>>,
+) -> Result<Option<String>, Box<dyn Error>> {
     for tool_input in tool_candidates {
         for tool in &all_tools {
             if tool.get_indicator() == tool_input.name {
                 if let Some(result) =
-                    tool.execute(tool_input.parameter.as_deref(), &tool_input.content)
+                    tool.execute(tool_input.parameter.as_deref(), &tool_input.content)?
                 {
-                    return Some(result);
+                    return Ok(Some(result));
                 }
             }
         }
     }
-    None
+    Ok(None)
 }
 
 fn check_for_tools(llm_output: &str) -> Vec<ToolInput> {
@@ -105,9 +109,13 @@ mod tests {
             self.indicator.clone()
         }
 
-        fn execute(&self, _parameter: Option<&str>, _content: &str) -> Option<String> {
+        fn execute(
+            &self,
+            _parameter: Option<&str>,
+            _content: &str,
+        ) -> Result<Option<String>, Box<dyn Error>> {
             *self.was_called.borrow_mut() = true;
-            self.result.clone()
+            Ok(self.result.clone())
         }
     }
 
@@ -209,7 +217,7 @@ directory contents
             Box::new(tool3.clone()),
         ];
 
-        let result = execute_tools(tool_candidates, all_tools);
+        let result = execute_tools(tool_candidates, all_tools).unwrap();
 
         assert_eq!(result, Some("success".to_string()));
         assert!(tool1.was_called());
@@ -247,7 +255,7 @@ directory contents
             Box::new(tool3.clone()),
         ];
 
-        let result = execute_tools(tool_candidates, all_tools);
+        let result = execute_tools(tool_candidates, all_tools).unwrap();
 
         assert_eq!(result, None);
         assert!(tool1.was_called());
@@ -285,7 +293,7 @@ directory contents
             Box::new(tool3.clone()),
         ];
 
-        let result = execute_tools(tool_candidates, all_tools);
+        let result = execute_tools(tool_candidates, all_tools).unwrap();
 
         assert_eq!(result, Some("early success".to_string()));
         assert!(tool1.was_called());
